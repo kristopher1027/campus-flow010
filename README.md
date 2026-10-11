@@ -9,7 +9,7 @@ Campus IT requests such as Wi-Fi outages, faulty laptops, and inaccessible softw
 ## Fellows and contributions
 
 - **Kristopher Okoh (Engineer A):** ticket creation and validation, priority calculation, ticket IDs, JSON storage, and project documentation.
-- **Moshel9ice (Engineer B):** ticket assignment, status transitions, prioritized work queue, and ticket reports.
+- **Moses Attah(Engineer B):** ticket assignment, status transitions, prioritized work queue, and ticket reports.
 - **Shared work:** integration through the CLI, tests, and review of the combined behavior.
 
 Relevant merged pull requests:
