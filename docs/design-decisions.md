@@ -91,4 +91,15 @@ The function returns a sorted list without sorting the original ticket collectio
 | Assignment, workflow, queue, reports | Engineer B |
 | Storage integration and CLI entry point | Shared integration work |
 
+## Cross-engineer edge-case check
+
+- **Initial state:** An empty ticket list; no ticket has been created yet.
+- **Input:** Create a ticket with title `x`, category `Network`, urgency `low`, and affected-users text `٣` (Arabic-Indic digit three).
+- **Expected result:** The numeric text is accepted as the integer `3`, and the priority is `medium` under the existing threshold rule.
+- **Actual result:** `create_ticket` returned `affected_users == 3` as an `int` and `priority == "medium"`.
+- **Test name:** `test_unicode_decimal_string_affected_users_normalized` in `tests/test_tickets.py`.
+- **Code change:** No production code change was needed; the new regression test makes the numeric-string normalization behavior explicit.
+
+This edge case supplements the standard affected-user scenarios by checking a Unicode decimal digit rather than an ASCII digit. Share this result with Engineer A as a focused review note.
+
 Relevant implementation history: [PR #13 — ticket creation](https://github.com/kristopher1027/campus-flow/pull/13), [PR #12 — assignment/workflow/queue/reports](https://github.com/kristopher1027/campus-flow/pull/12), [PR #18 — JSON storage](https://github.com/kristopher1027/campus-flow/pull/18), and [PR #19 — CLI menu](https://github.com/kristopher1027/campus-flow/pull/19).

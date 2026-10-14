@@ -50,6 +50,12 @@ class TestCreateTicket(unittest.TestCase):
         self.assertEqual(ticket["affected_users"], 15)
         self.assertIsInstance(ticket["affected_users"], int)
 
+    def test_unicode_decimal_string_affected_users_normalized(self):
+        ticket = create_ticket([], "x", "Network", "low", "٣")
+        self.assertEqual(ticket["affected_users"], 3)
+        self.assertIsInstance(ticket["affected_users"], int)
+        self.assertEqual(ticket["priority"], "medium")
+
 
 class TestInvalidInput(unittest.TestCase):
 
