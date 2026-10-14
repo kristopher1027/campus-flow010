@@ -45,7 +45,7 @@ All JSON file access belongs to `campusflow/storage.py`; other modules call `loa
 
 ## 4. ID rule
 
-`generate_next_id(tickets)` finds the highest numeric suffix among existing ticket IDs and adds one, formatted with at least three digits (`T001`, `T002`, …, `T010`). It does not use the list length, which could create duplicate IDs if IDs are not contiguous. Since the full list is loaded before new tickets are created, IDs continue after a normal save/reload cycle.
+`generate_next_id(tickets)` finds the highest numeric suffix among existing ticket IDs and adds one, formatted with at least three digits (`T001`, `T002`, …, `T010`). It does not use the list length, which could create duplicate IDs if IDs are not contiguous. Existing IDs must follow the `T`-prefixed positive-number format and must be unique. Malformed or duplicate IDs raise `ValueError` before a new ticket is appended. Since the full list is loaded before new tickets are created, IDs continue after a normal save/reload cycle.
 
 **Implementation:** `campusflow/tickets.py`; coverage includes ID boundaries and creating a ticket after reloading in `tests/test_tickets.py` and `tests/test_storage.py`.
 
@@ -60,7 +60,8 @@ All JSON file access belongs to `campusflow/storage.py`; other modules call `loa
 | `resolved` | `open` | Explicitly reopens the ticket |
 | Any other pair | — | Rejected with `ValueError` |
 
-The explicit reopen step prevents a resolved ticket from skipping the defined workflow. Assignment and transition functions validate before changing the ticket.
+
+The explicit reopen step prevents a resolved ticket from skipping the defined workflow. Resolved tickets cannot be assigned until they are reopened. Assignment and transition functions validate all applicable rules before mutation; rejected operations raise `ValueError` and leave the ticket collection unchanged.
 
 **Implementation:** `campusflow/workflow.py`, `tests/test_workflow.py`.
 
@@ -77,7 +78,7 @@ The function returns a sorted list without sorting the original ticket collectio
 - Ticket titles are stripped of leading/trailing whitespace and must not be blank.
 - Category input is stripped and compared case-insensitively; stored/displayed values use canonical names such as `Network`.
 - Urgency input is stripped and normalized to lowercase.
-- Affected users must be a positive whole number; booleans, floats, and non-numeric strings are rejected.
+- `affected_users` must be a strictly positive Python `int`. Booleans, floats, strings, zero, and negative values are rejected by validation. The CLI is responsible for converting valid numeric text to an integer before calling the validator.
 - Staff names are stripped and cannot be blank.
 - Ticket lookup in `campusflow/tickets.py` accepts ID case/whitespace variations. The assignment and status functions currently compare IDs exactly, so the CLI should use the canonical ticket ID when assigning or changing status.
 

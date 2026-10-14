@@ -49,30 +49,117 @@ def validate_urgency(urgency):
     return cleaned
 
 
+
 def validate_affected_users(value):
-    """Return a positive whole number as an int, or raise ValueError."""
-    if isinstance(value, bool):
-        raise ValueError("Affected users must be a whole number, not True/False.")
+    """Accept only a strictly positive integer, excluding booleans."""
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError("Affected users must be a positive integer.")
 
-    if isinstance(value, str):
-        cleaned = value.strip()
-        if not cleaned.isdigit():
-            raise ValueError("Affected users must be a positive whole number.")
-        number = int(cleaned)
-    elif isinstance(value, int):
-        number = value
-    else:
-        raise ValueError("Affected users must be a positive whole number.")
-
-    if number <= 0:
+    if value <= 0:
         raise ValueError("Affected users must be greater than zero.")
-    return number
+
+    return value
+
+
+
+def validate_ticket(ticket):
+    """Validate a ticket's shape and values without modifying it."""
+    required_fields = {
+        "id",
+        "title",
+        "category",
+        "urgency",
+        "affected_users",
+        "priority",
+        "status",
+        "assigned_to",
+    }
+
+    if not isinstance(ticket, dict):
+        raise ValueError("Ticket must be a dictionary.")
+
+    missing = required_fields - ticket.keys()
+    if missing:
+        raise ValueError(
+            "Ticket is missing required fields: "
+            + ", ".join(sorted(missing)) + "."
+        )
+
+    ticket_id = ticket["id"]
+    if (
+        not isinstance(ticket_id, str)
+        or len(ticket_id) < 2
+        or ticket_id[0] != "T"
+        or not ticket_id[1:].isdigit()
+        or int(ticket_id[1:]) <= 0
+    ):
+        raise ValueError(
+            "Ticket ID must use the format T001 with a positive number."
+        )
+
+    validate_title(ticket["title"])
+    validate_category(ticket["category"])
+    validate_urgency(ticket["urgency"])
+    validate_affected_users(ticket["affected_users"])
+
+    allowed_statuses = ("open", "in_progress", "resolved")
+    if ticket["status"] not in allowed_statuses:
+        raise ValueError(
+            "Status must be one of: " + ", ".join(allowed_statuses) + "."
+        )
+
+    assignee = ticket["assigned_to"]
+    if assignee is not None and (
+        not isinstance(assignee, str) or not assignee.strip()
+    ):
+        raise ValueError(
+            "Assigned staff name must be non-blank text or None."
+        )
+
+    expected_priority = calculate_priority(
+        ticket["urgency"], ticket["affected_users"]
+    )
+    if ticket["priority"] != expected_priority:
+        raise ValueError(
+            f"Priority must be '{expected_priority}' for this urgency "
+            "and affected-user count."
+        )
+
+    return ticket
+
 
 
 def generate_next_id(tickets):
-    """Return the next ID: highest existing number + 1, formatted like 'T001'."""
-    highest = max((int(t["id"][1:]) for t in tickets), default=0)
+    """Return the next ID after validating all existing ticket IDs."""
+    seen_ids = set()
+    highest = 0
+
+    for ticket in tickets:
+        if not isinstance(ticket, dict):
+            raise ValueError("Every ticket must be a dictionary.")
+
+        ticket_id = ticket.get("id")
+
+        if (
+            not isinstance(ticket_id, str)
+            or len(ticket_id) < 2
+            or ticket_id[0] != "T"
+            or not ticket_id[1:].isascii()
+            or not ticket_id[1:].isdigit()
+            or int(ticket_id[1:]) <= 0
+        ):
+            raise ValueError(
+                "Ticket ID must use the format T001 with a positive number."
+            )
+
+        if ticket_id in seen_ids:
+            raise ValueError(f"Duplicate ticket ID '{ticket_id}'.")
+
+        seen_ids.add(ticket_id)
+        highest = max(highest, int(ticket_id[1:]))
+
     return f"T{highest + 1:03d}"
+
 
 def create_ticket(tickets, title, category, urgency, affected_users):
     """Validate everything, then build and append a ticket. Return the ticket."""

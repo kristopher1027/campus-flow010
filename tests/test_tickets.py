@@ -1,6 +1,7 @@
 import unittest
 
 from campusflow.tickets import (
+    
     calculate_priority,
     create_ticket,
     find_ticket,
@@ -8,6 +9,7 @@ from campusflow.tickets import (
     format_ticket_list,
     format_ticket_summary,
     generate_next_id,
+    validate_ticket,
     validate_affected_users,
 )
 
@@ -45,11 +47,10 @@ class TestCreateTicket(unittest.TestCase):
                 ticket = create_ticket([], "x", "Network", raw, 1)
                 self.assertEqual(ticket["urgency"], "high")
 
-    def test_numeric_string_affected_users_accepted(self):
-        ticket = create_ticket([], "x", "Network", "low", "15")
-        self.assertEqual(ticket["affected_users"], 15)
-        self.assertIsInstance(ticket["affected_users"], int)
-
+   
+    def test_numeric_string_affected_users_rejected(self):
+        with self.assertRaises(ValueError):
+            create_ticket([], "x", "Network", "low", "15")
 
 class TestInvalidInput(unittest.TestCase):
 
@@ -71,11 +72,13 @@ class TestInvalidInput(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     create_ticket([], "x", "Network", bad, 5)
 
+    
     def test_bad_affected_users_rejected(self):
-        for bad in (0, -3, 2.5, "abc", "", "2.5", "-3", True, False, None):
+        for bad in (0, -3, 2.5, "5", "abc", "", "2.5", "-3", True, False, None):
             with self.subTest(bad=bad):
                 with self.assertRaises(ValueError):
                     validate_affected_users(bad)
+
 
     def test_failed_creation_leaves_list_unchanged(self):
         tickets = []
@@ -91,6 +94,30 @@ class TestInvalidInput(unittest.TestCase):
 
 
 class TestIds(unittest.TestCase):
+
+    def test_duplicate_existing_ids_rejected(self):
+        tickets = [
+            {"id": "T001"},
+            {"id": "T001"},
+        ]
+        with self.assertRaises(ValueError):
+            generate_next_id(tickets)
+
+    def test_malformed_existing_id_rejected(self):
+        for bad_id in ("bad", "", "T000", "TABC", "T-01"):
+            with self.subTest(bad_id=bad_id):
+                with self.assertRaises(ValueError):
+                    generate_next_id([{"id": bad_id}])
+
+    def test_creation_with_invalid_existing_id_leaves_list_unchanged(self):
+        tickets = [{"id": "invalid"}]
+        snapshot = [dict(ticket) for ticket in tickets]
+
+        with self.assertRaises(ValueError):
+            create_ticket(tickets, "New ticket", "Network", "low", 1)
+
+        self.assertEqual(tickets, snapshot)
+
 
     def test_first_id_is_t001(self):
         self.assertEqual(generate_next_id([]), "T001")
@@ -140,7 +167,7 @@ class TestPriority(unittest.TestCase):
                 self.assertEqual(calculate_priority(urgency, users), expected)
 
     def test_create_ticket_calculates_priority(self):
-        ticket = create_ticket([], "Wi-Fi down", "Network", "HIGH", "12")
+        ticket = create_ticket([], "Wi-Fi down", "Network", "HIGH", 12)
         self.assertEqual(ticket["priority"], "critical")
 
 def make_ticket(**overrides):
@@ -223,6 +250,51 @@ class TestFormatting(unittest.TestCase):
         self.assertEqual(len(lines), 2)
         self.assertIn("T001", lines[0])
         self.assertIn("T002", lines[1])
+
+
+class TestValidateTicket(unittest.TestCase):
+
+    def test_valid_ticket_is_returned_unchanged(self):
+        ticket = make_ticket()
+        original = dict(ticket)
+
+        result = validate_ticket(ticket)
+
+        self.assertIs(result, ticket)
+        self.assertEqual(ticket, original)
+
+    def test_non_dictionary_rejected(self):
+        for bad in (None, [], "ticket"):
+            with self.subTest(bad=bad):
+                with self.assertRaises(ValueError):
+                    validate_ticket(bad)
+
+    def test_missing_required_field_rejected(self):
+        ticket = make_ticket()
+        del ticket["title"]
+
+        with self.assertRaisesRegex(ValueError, "missing required fields"):
+            validate_ticket(ticket)
+
+    def test_invalid_ticket_values_rejected(self):
+        cases = [
+            {"title": "   "},
+            {"category": "Plumbing"},
+            {"urgency": "urgent"},
+            {"affected_users": True},
+            {"affected_users": 0},
+            {"status": "cancelled"},
+            {"assigned_to": "   "},
+            {"id": "invalid"},
+            {"priority": "low"},
+        ]
+
+        for changes in cases:
+            with self.subTest(changes=changes):
+                ticket = make_ticket(**changes)
+                with self.assertRaises(ValueError):
+                    validate_ticket(ticket)
+
 
 if __name__ == "__main__":
     unittest.main()
