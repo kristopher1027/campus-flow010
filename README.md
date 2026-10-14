@@ -67,7 +67,7 @@ The workflow is enforced by `transition_status()` in `campusflow/workflow.py`.
 | `resolved` | `open` | Allowed to explicitly reopen the ticket |
 | Any other transition | — | Rejected with `ValueError` |
 
-Resolved tickets must be reopened before they can return to work. The work queue contains only `open` and `in_progress` tickets, sorted by priority (critical first) and then by numeric ticket ID ascending.
+Resolved tickets must be reopened before they can return to work. The Open Work Queue contains only `open` tickets, sorted by priority (critical first) and then by numeric ticket ID ascending. Tickets in `in_progress` are excluded.
 
 ## Where ticket data is saved
 

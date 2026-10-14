@@ -24,10 +24,10 @@ def list_tickets(tickets):
 
 
 def work_queue(tickets):
-    """Return unresolved tickets sorted by priority and numeric ID."""
+    """Return open tickets sorted by priority and numeric ID."""
     queue = [
         ticket for ticket in tickets
-        if ticket["status"] in UNRESOLVED_STATUSES
+        if ticket["status"] == "open"
     ]
 
     def sort_key(ticket):

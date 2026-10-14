@@ -205,15 +205,14 @@ class TestFormatSearchResults(unittest.TestCase):
 
 class TestOriginalWorkQueueUnchanged(unittest.TestCase):
 
-    def test_queue_excludes_resolved(self):
+    def test_queue_excludes_in_progress_and_resolved(self):
         queue = work_queue(sample_tickets())
         self.assertNotIn("T4", ids(queue))
+        self.assertNotIn("T2", ids(queue))
 
-    def test_queue_behaviour_matches_current_main(self):
-        # Pins the CURRENT behaviour on main: open + in_progress, sorted.
-        # See the note in the PR about the issue's "excludes in_progress" wording.
+    def test_queue_contains_only_open_tickets(self):
         queue = work_queue(sample_tickets())
-        self.assertEqual(ids(queue), ["T1", "T2", "T3", "T5"])
+        self.assertEqual(ids(queue), ["T1", "T3", "T5"])
 
     def test_adding_search_does_not_change_queue(self):
         tickets = sample_tickets()

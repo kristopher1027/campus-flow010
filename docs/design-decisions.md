@@ -66,7 +66,7 @@ The explicit reopen step prevents a resolved ticket from skipping the defined wo
 
 ## 6. Work queue decision
 
-`work_queue(tickets)` includes tickets whose status is `open` or `in_progress`; resolved tickets are excluded because they no longer need active work. The queue sorts by priority (`critical`, `high`, `medium`, `low`) and then by numeric ticket ID ascending so older/lower-numbered tickets appear first within the same priority.
+`work_queue(tickets)` includes only tickets whose status is `open`; `in_progress` and `resolved` tickets are excluded. The queue sorts by priority (`critical`, `high`, `medium`, `low`) and then by numeric ticket ID ascending so older/lower-numbered tickets appear first within the same priority.
 
 The function returns a sorted list without sorting the original ticket collection in place.
 

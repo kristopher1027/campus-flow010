@@ -58,7 +58,7 @@ class TestWorkQueue(unittest.TestCase):
         ids = [t["id"] for t in queue]
         self.assertEqual(ids, ["T002", "T005", "T010"])
 
-    def test_excludes_resolved(self):
+    def test_includes_only_open_tickets(self):
         tickets = [
             make_ticket("T001", status="open"),
             make_ticket("T002", status="resolved"),
@@ -66,7 +66,7 @@ class TestWorkQueue(unittest.TestCase):
         ]
         queue = work_queue(tickets)
         ids = [t["id"] for t in queue]
-        self.assertEqual(sorted(ids), ["T001", "T003"])
+        self.assertEqual(ids, ["T001"])
 
     def test_empty_queue(self):
         self.assertEqual(work_queue([]), [])
