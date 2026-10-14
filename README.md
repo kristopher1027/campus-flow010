@@ -41,7 +41,7 @@ From the repository root:
 python3 -m unittest discover -s tests -v
 ```
 
-The tests use Python's built-in `unittest` framework. The committed integration test output records **59 tests passing** on the documented `main` revision; run the command above to verify the current checkout.
+The tests use Python's built-in `unittest` framework. The integration run on `test/30-integration` records **157 tests passing** at commit `6b6bb8b`; see [`docs/test-output.txt`](docs/test-output.txt). Rerun the command above after any changes.
 
 ## Priority rules
 
