@@ -75,6 +75,15 @@ The function returns a sorted list without sorting the original ticket collectio
 
 **Implementation:** `campusflow/reports.py`, `tests/test_reports.py`.
 
+### Engineer B bug-hunter case (Issue #24)
+
+- **Initial state:** Two same-priority tickets are in the work list, ordered as `T10`, then `T2`.
+- **Input:** Call `work_queue(tickets)` with both tickets at priority `high`.
+- **Expected result:** The returned queue orders them numerically as `T2`, `T10`; the original input list remains `T10`, `T2`.
+- **Actual result:** `test_tie_break_handles_unpadded_numeric_ids` passes with that order, and confirms the original list is unchanged.
+- **Test name:** `test_tie_break_handles_unpadded_numeric_ids` in `tests/test_reports.py`.
+- **Code change:** Added this regression test; no production code change was needed because `work_queue` already sorts by the numeric ID suffix.
+
 ## 7. Normalization
 
 - Ticket titles are stripped of leading/trailing whitespace and must not be blank.

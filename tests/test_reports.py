@@ -57,6 +57,18 @@ class TestWorkQueue(unittest.TestCase):
         ids = [t["id"] for t in queue]
         self.assertEqual(ids, ["T002", "T005", "T010"])
 
+    def test_tie_break_handles_unpadded_numeric_ids(self):
+        # Numeric order must hold even when imported IDs lack zero padding.
+        tickets = [
+            make_ticket("T10", priority="high"),
+            make_ticket("T2", priority="high"),
+        ]
+
+        queue = work_queue(tickets)
+
+        self.assertEqual([ticket["id"] for ticket in queue], ["T2", "T10"])
+        self.assertEqual([ticket["id"] for ticket in tickets], ["T10", "T2"])
+
     def test_excludes_resolved(self):
         tickets = [
             make_ticket("T001", status="open"),
