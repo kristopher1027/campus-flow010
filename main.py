@@ -6,7 +6,7 @@ from campusflow.tickets import (
     format_ticket_list,
     format_ticket_details,
 )
-from campusflow.reports import work_queue, report_summary
+from campusflow.reports import work_queue, report_summary, format_report
 from campusflow.workflow import assign_ticket, transition_status
 from campusflow.storage import load_tickets, save_tickets, DEFAULT_PATH
 
@@ -80,14 +80,7 @@ def handle_queue(tickets):
 
 
 def handle_report(tickets):
-    summary = report_summary(tickets)
-    print(f"Total tickets: {summary['total']}")
-    print("\nBy status:")
-    for status, count in summary["by_status"].items():
-        print(f"  {status}: {count}")
-    print("\nBy priority:")
-    for priority, count in summary["by_priority"].items():
-        print(f"  {priority}: {count}")
+    print(format_report(report_summary(tickets)))
 
 
 # ============================================================
