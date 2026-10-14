@@ -31,7 +31,7 @@ python3 --version
 python3 main.py
 ```
 
-The menu lets you create, list, and view tickets; assign a ticket; change its status; display the work queue; view a report; or exit. Enter the number for the action you want and follow the prompts.
+The menu lets you create, list, and view tickets; assign a ticket; change its status; display the open work queue; view a report; add or view follow-up notes; search tickets; view search results sorted by priority; or take the understanding check. Enter the number for the action you want and follow the prompts.
 
 ## Run the tests
 
@@ -72,6 +72,8 @@ Resolved tickets must be reopened before they can return to work. The Open Work 
 ## Where ticket data is saved
 
 The application stores tickets as JSON in `data/tickets.json`, configured by `DEFAULT_PATH` in `campusflow/storage.py`. The `data/tickets.json` file is ignored by Git so local ticket data is not committed.
+
+Each file contains a JSON list of ticket objects. Current records include `id`, `title`, `category`, `urgency`, `affected_users`, `priority`, `status`, `assigned_to`, and `notes`. `assigned_to` is either a staff name or JSON `null`; `notes` is a list of objects with `note_id`, `author`, and `message`. The loader validates the entire list and rejects invalid records rather than returning a partially loaded collection. Legacy v1 records that omit `notes` are supported and load with `notes: []`; files with the current notes field use the current format.
 
 - The data directory is created when saving if it does not exist.
 - On startup, if the file is missing, CampusFlow starts with an empty ticket list.

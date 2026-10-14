@@ -3,6 +3,7 @@
 from campusflow.tickets import (
     create_ticket,
     find_ticket,
+    add_note,
     format_ticket_list,
     format_ticket_details,
 )
@@ -10,8 +11,7 @@ from campusflow.reports import work_queue, report_summary, format_report
 from campusflow.workflow import assign_ticket, transition_status
 from campusflow.storage import load_tickets, save_tickets, DEFAULT_PATH
 from campusflow.search import search_tickets, sort_by_priority, format_search_results
-from campusflow.notes import add_note, get_notes
-from campusflow.note_storage import load_notes, save_notes, NOTES_PATH
+from campusflow.notes import get_notes
 from campusflow.understanding_check import QUESTIONS, run_check
 
 
@@ -89,27 +89,28 @@ def handle_report(tickets):
 
 
 
-def handle_add_note(tickets, notes):
+def handle_add_note(tickets):
     try:
         ticket_id = input("Ticket ID: ").strip()
+        author = input("Your name: ").strip()
         note_text = input("Follow-up note: ").strip()
 
-        note = add_note(notes, tickets, ticket_id, note_text)
-        save_notes(notes, NOTES_PATH)
+        note = add_note(tickets, ticket_id, author, note_text)
+        save_tickets(tickets, DEFAULT_PATH)
 
         print(
-            f"Note {note['id']} added to ticket "
-            f"{note['ticket_id']} successfully."
+            f"Note {note['note_id']} added to ticket "
+            f"{ticket_id} successfully."
         )
 
     except ValueError as error:
         print(f"Error: {error}")
 
 
-def handle_view_notes(tickets, notes):
+def handle_view_notes(tickets):
     try:
         ticket_id = input("Ticket ID: ").strip()
-        ticket_notes = get_notes(notes, tickets, ticket_id)
+        ticket_notes = get_notes(tickets, ticket_id)
 
         if not ticket_notes:
             print(f"No notes found for ticket {ticket_id}.")
@@ -117,7 +118,7 @@ def handle_view_notes(tickets, notes):
 
         print(f"\nNotes for ticket {ticket_id}:")
         for note in ticket_notes:
-            print(f"Note {note['id']}: {note['text']}")
+            print(f"Note {note['note_id']} by {note['author']}: {note['message']}")
 
     except ValueError as error:
         print(f"Error: {error}")
@@ -205,7 +206,6 @@ def show_menu():
 
 def main():
     tickets = load_tickets(DEFAULT_PATH)
-    notes = load_notes(NOTES_PATH)
 
     while True:
         show_menu()
@@ -233,9 +233,9 @@ def main():
             handle_report(tickets)
         
         elif choice == "8":
-            handle_add_note(tickets, notes)
+            handle_add_note(tickets)
         elif choice == "9":
-            handle_view_notes(tickets, notes)
+            handle_view_notes(tickets)
 
         elif choice == "10":
             handle_search(tickets)

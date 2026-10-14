@@ -1,43 +1,15 @@
+"""Read helpers for notes embedded on tickets."""
 
-"""Create, validate, and retrieve ticket follow-up notes."""
-
-from campusflow.tickets import find_ticket
+from campusflow.tickets import find_ticket, next_note_id
 
 
-def add_note(notes, tickets, ticket_id, text):
-    """Add a note to an existing ticket."""
+def get_notes(tickets, ticket_id):
+    """Return a ticket's notes ordered by their numeric note ID."""
     ticket = find_ticket(tickets, ticket_id)
-
-    if ticket["status"] == "resolved":
-        raise ValueError("Cannot add a note to a resolved ticket. Reopen it first.")
-
-    if not isinstance(text, str) or not text.strip():
-        raise ValueError("Note cannot be empty.")
-
-    next_id = max(
-        (note["id"] for note in notes),
-        default=0,
-    ) + 1
-
-    note = {
-        "id": next_id,
-        "ticket_id": ticket["id"],
-        "text": text.strip(),
-    }
-
-    notes.append(note)
-    return note
-
-
-def get_notes(notes, tickets, ticket_id):
-    """Return notes for an existing ticket in ID order."""
-    ticket = find_ticket(tickets, ticket_id)
-
     return sorted(
-        [
-            note for note in notes
-            if note["ticket_id"] == ticket["id"]
-        ],
-        key=lambda note: note["id"],
+        ticket.get("notes", []),
+        key=lambda note: int(note["note_id"][1:]),
     )
-    
+
+
+__all__ = ["get_notes", "next_note_id"]
