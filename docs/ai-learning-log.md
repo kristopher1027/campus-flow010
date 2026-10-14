@@ -1,12 +1,16 @@
 # AI Learning Log — CampusFlow
 
-Each fellow records at least three AI interactions. At least one interaction per fellow documents how an AI suggestion was verified, corrected, improved, or rejected.
+Each fellow records at least two learning cycles using the required fields: concept gap, exact question, AI summary, tiny unrelated experiment, independent verification, and decision. Before submission, each fellow must confirm that the first-person wording and unrelated experiments reflect their own experience, and include a truthful short reflection covering a verified mistake, learning gain, and improvement received through code review.
 
-> **Accuracy note:** These entries are first-person reflections supplied for this log. Each fellow should review and edit their section so it accurately represents their own experience before assessment submission.
+> **Accuracy note:** The repository verifies code and tests, but does not record personal AI conversations or code-review feedback. The user confirmed the learning cycles and reflections for Christopher, Moses, and Musa. No team-level changed or rejected AI suggestion is claimed because the available project record does not establish one.
 
 ---
 
 ## Fellow A — Christopher Okoh
+
+### Reflection
+
+I first thought parsing `affected_users` with `int()` inside a `try/except` was enough. I verified that zero still parses, so I added a separate positive-value check. I learned to validate the actual rule the project needs, not just whether input can be parsed. A useful review improvement was making saved ticket data stricter: I updated the loader to reject invalid records and duplicate IDs, and added tests to check that rejected files remain unchanged.
 
 ### Interaction 1 — JSON round-trip with `json.dump` and `json.load`
 
@@ -83,6 +87,44 @@ Each fellow records at least three AI interactions. At least one interaction per
 - **Decision:** **Rejected** alphabetical sorting and used an explicit priority-rank mapping in the report implementation.
 - **Related project evidence:** [`campusflow/reports.py`](../campusflow/reports.py), [`tests/test_reports.py`](../tests/test_reports.py), commit `06df50b`.
 - **What I can now explain without AI:** Alphabetical order is not a substitute for a domain-specific ranking. When a specification defines semantic order, encode that order explicitly and test it.
+
+### Reflection — Moses Attah
+
+One mistake I verified while working on status transitions was that nested conditionals made it easy to miss an invalid branch. I made the allowed transitions explicit and checked preconditions, such as requiring an assignee before starting work. I learned to keep transition rules clear and test invalid changes before mutating a ticket.
+
+One improvement I received through code review was stronger coverage for invalid transitions, including verifying that rejected changes leave ticket data unchanged. The regression tests are in `tests/test_workflow.py`.
+
+---
+
+## Fellow C — Musa Ogeh
+
+> **Confirmation:** Musa Ogeh confirmed these learning-cycle details. Git history attributes the search feature, report insights, CLI interaction tests, and understanding check to `muogeh` (`musaogeh@gmail.com`).
+
+### Interaction 1 — Combining optional search filters
+
+- **Concept gap:** I needed to understand how title, category, status, and priority filters should work when a user supplies more than one.
+- **Exact question:** “Explain how to combine optional filters with AND behavior using a small example unrelated to my project. How should blank filters be handled?”
+- **AI summary:** With AND behavior, a result must match every supplied filter. An omitted or blank filter is skipped. Text matching can use a case-insensitive substring, while category, status, and priority can use exact case-insensitive matches.
+- **Tiny unrelated experiment:** Filter a small list of books by title text, genre, and availability, then check that only books matching all supplied filters remain.
+- **Independent project verification:** `test_text_category_status_all_combined` checks text, category, and status together. `test_search_leaves_collection_unchanged` checks that searching does not modify the source tickets (`tests/test_search.py`). The implementation is in `campusflow/search.py`, introduced in commit `e8357a0`.
+- **Decision:** Keep AND behavior for supplied filters, skip blank filters, and return results without modifying the source list.
+- **What I can explain without AI:** A filter pipeline can reject a record as soon as any supplied condition fails; records that pass every condition are returned.
+
+### Interaction 2 — Calculating report rates for empty and filled data
+
+- **Concept gap:** I needed to understand how to calculate a resolution rate while handling an empty ticket list and keeping the status and category counts consistent.
+- **Exact question:** “Show a small unrelated example of counting completed items as a percentage of all items. How should the calculation handle an empty list?”
+- **AI summary:** Count completed items and divide by the total, then multiply by 100. When the total is zero, return zero percent instead of dividing by zero. Counts should be checked against the total.
+- **Tiny unrelated experiment:** Calculate a completed-task rate for a short list of chores, including an empty list, and compare each displayed group count with the number of chores.
+- **Independent project verification:** `test_empty_list_includes_every_group_with_zero`, `test_known_fixture_gives_exact_counts`, and `test_each_group_of_counts_sums_to_total` cover empty reports, expected counts, and totals (`tests/test_reports.py`). The report changes are in `campusflow/reports.py`, commits `74602a7` and `6b56e88`.
+- **Decision:** Keep a zero rate for empty input, count unresolved tickets as `open` plus `in_progress`, and verify that each report's grouped counts sum to the total.
+- **What I can explain without AI:** Guarding the zero-total case avoids a division error, and comparing grouped counts with the total catches missing or double-counted records.
+
+### Reflection — Musa Ogeh
+
+One assumption I corrected while working on search was that case-insensitive matching would also ignore punctuation. The tests distinguish `wifi` from `Wi-Fi`, which helped me define search as a literal, case-insensitive substring. I learned to make edge behavior explicit in tests and to verify that combined filters and read-only behavior work together. I also added CLI interaction tests for notes and search so prompts, validation, and user-visible results are covered.
+
+One improvement I received through code review was to test the CLI interaction, not only the search and notes helpers. I added tests for the prompts, validation, and results (`tests/test_cli.py`, commit `4dc2622`).
 
 ---
 

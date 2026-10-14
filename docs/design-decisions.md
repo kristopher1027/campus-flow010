@@ -100,9 +100,10 @@ The function returns a sorted list without sorting the original ticket collectio
 
 | Area | Contribution |
 |---|---|
-| Ticket creation, validation, priority engine, ID generation | Engineer A |
-| Assignment, workflow, queue, reports | Engineer B |
-| Storage integration and CLI entry point | Shared integration work |
+| Ticket creation, validation, priority engine, ID generation, JSON validation, follow-up notes | Engineer A |
+| Assignment, workflow, original Open Work Queue, initial ticket reports | Engineer B |
+| Read-only search, priority-sorted results, report insights, understanding check, CLI interaction tests, and regression checks | Fellow C |
+| CLI integration and cross-feature review | Shared integration work |
 
 ## Cross-engineer edge-case check
 
@@ -115,7 +116,7 @@ The function returns a sorted list without sorting the original ticket collectio
 
 This edge case supplements the standard title checks by testing non-breaking spaces rather than ordinary spaces. Share this result with Engineer A as a focused review note.
 
-Relevant implementation history: [PR #13 — ticket creation](https://github.com/kristopher1027/campus-flow/pull/13), [PR #12 — assignment/workflow/queue/reports](https://github.com/kristopher1027/campus-flow/pull/12), [PR #18 — JSON storage](https://github.com/kristopher1027/campus-flow/pull/18), and [PR #19 — CLI menu](https://github.com/kristopher1027/campus-flow/pull/19).
+Relevant implementation history: [PR #13 — ticket creation](https://github.com/kristopher1027/campus-flow010/pull/13), [PR #12 — assignment/workflow/queue/reports](https://github.com/kristopher1027/campus-flow010/pull/12), [PR #18 — JSON storage](https://github.com/kristopher1027/campus-flow010/pull/18), and [PR #19 — CLI menu](https://github.com/kristopher1027/campus-flow010/pull/19).
 
 
 ## Ticket Notes (Issue #21)
@@ -153,3 +154,20 @@ Notes remain attached to their ticket when its status changes, including when th
 ### CLI integration contract
 
 The CLI can call `add_note(tickets, ticket_id, author, message)`. On success, it receives the created note dictionary. It should catch `ValueError` and display a clear error message to the user.
+
+## 8. Search contract (Issue #25)
+
+`search_tickets(tickets, text=None, category=None, status=None, priority=None)` returns a new list containing tickets that match every supplied filter. It does not mutate the source collection.
+
+- `text` matches a case-insensitive substring of the title using `casefold()`; it is not fuzzy matching.
+- `category`, `status`, and `priority` are exact matches after trimming surrounding whitespace and ignoring case.
+- `None`, empty strings, and whitespace-only filters are ignored.
+- When more than one filter is supplied, all must match (AND behavior).
+- `sort_by_priority(tickets)` returns a new list ordered by `critical`, `high`, `medium`, then `low`, with numeric ticket ID as the tie-breaker.
+- `format_search_results` displays ID, title, category, priority, status, assignee, and a result count; unassigned tickets display as `Unassigned`.
+
+**Errors and empty results:** Search returns an empty list when nothing matches; the formatter displays `No matching tickets found.` Search does not raise an error for an empty ticket list or omitted filters.
+
+**Implementation:** `campusflow/search.py`; coverage is in `tests/test_search.py` and CLI behavior in `tests/test_cli.py`.
+
+Related feature PRs: [PR #36 — validation and notes](https://github.com/kristopher1027/campus-flow010/pull/36) and [PR #37 — search and insights](https://github.com/kristopher1027/campus-flow010/pull/37).

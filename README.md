@@ -1,37 +1,65 @@
 # CampusFlow
 
-CampusFlow is a Python command-line helpdesk for managing campus IT support tickets. It helps a small support team record requests, calculate their priority, assign staff, track work, and review a summary of open and resolved tickets.
+CampusFlow is a local Python command-line helpdesk for campus IT support. It records requests, calculates priority, assigns staff, tracks ticket status, stores follow-up notes, supports search, and reports ticket counts.
 
-## Problem statement
+## Problem
 
-Campus IT requests such as Wi-Fi outages, faulty laptops, and inaccessible software can arrive through informal channels. Without a shared record, requests can be missed, urgency can be inconsistent, and staff may not know who is responsible. CampusFlow provides a lightweight, local ticket list and a repeatable workflow.
+Campus IT requests such as Wi-Fi outages, faulty laptops, and inaccessible software can arrive through informal channels. Without a shared record, requests can be missed, urgency can be inconsistent, and staff may not know who is responsible. CampusFlow provides a small, repeatable workflow backed by a local JSON file.
 
-## Fellows and contributions
+## Engineers and contributions
 
-- **Kristopher Okoh (Engineer A):** ticket creation and validation, priority calculation, ticket IDs, JSON storage, and project documentation.
-- **Moses Attah(Engineer B):** ticket assignment, status transitions, prioritized work queue, and ticket reports.
-- **Shared work:** integration through the CLI, tests, and review of the combined behavior.
+- **Christopher Okoh (Engineer A):** ticket creation and validation, priority calculation, ticket IDs, JSON storage and validation, and follow-up notes.
+- **Moses Attah (Engineer B):** assignment, status transitions, the original Open Work Queue, and ticket reports.
+- **Musa Ogeh (Fellow C):** read-only search and priority-sorted results, report insights, CLI interaction tests, the understanding check, and follow-up regression checks.
+- **Shared:** CLI integration, integration tests, and review of combined behavior.
 
-Relevant merged pull requests:
-- Engineer A — [Ticket creation and validation, PR #13](https://github.com/kristopher1027/campus-flow/pull/13) and [priority engine, PR #15](https://github.com/kristopher1027/campus-flow/pull/15).
-- Engineer B — [Assignment, workflow, queue and reports, PR #12](https://github.com/kristopher1027/campus-flow/pull/12) and [ticket summary reports, PR #17](https://github.com/kristopher1027/campus-flow/pull/17).
-- Shared integration — [JSON storage, PR #18](https://github.com/kristopher1027/campus-flow/pull/18) and [CLI menu, PR #19](https://github.com/kristopher1027/campus-flow/pull/19).
+Repository: [kristopher1027/campus-flow010](https://github.com/kristopher1027/campus-flow010).
+
+Key merged feature PRs:
+
+- Engineer A — [PR #36: validation and notes](https://github.com/kristopher1027/campus-flow010/pull/36).
+- Fellow C — [PR #37: search and insights](https://github.com/kristopher1027/campus-flow010/pull/37).
+
+Earlier feature history: [ticket creation, PR #13](https://github.com/kristopher1027/campus-flow010/pull/13), [priority engine, PR #15](https://github.com/kristopher1027/campus-flow010/pull/15), [workflow and queue, PR #12](https://github.com/kristopher1027/campus-flow010/pull/12), [reports, PR #17](https://github.com/kristopher1027/campus-flow010/pull/17), [JSON storage, PR #18](https://github.com/kristopher1027/campus-flow010/pull/18), and [CLI menu, PR #19](https://github.com/kristopher1027/campus-flow010/pull/19).
 
 ## Requirements
 
-- Python 3.10 or later (project target).
-- No third-party packages; the application uses Python's standard library.
+- Python 3.10 or later.
+- No third-party packages are needed; the app and tests use Python's standard library.
+
+## Get a fresh copy
+
+```bash
+git clone https://github.com/kristopher1027/campus-flow010.git
+cd campus-flow010
+```
 
 ## Run the application
 
-From the repository root:
+From the repository root (the `campus-flow010` directory after cloning):
 
 ```bash
 python3 --version
 python3 main.py
 ```
 
-The menu lets you create, list, and view tickets; assign a ticket; change its status; display the open work queue; view a report; add or view follow-up notes; search tickets; view search results sorted by priority; or take the understanding check. Enter the number for the action you want and follow the prompts.
+The menu actions are:
+
+| Choice | Action |
+|---|---|
+| 1 | Create ticket |
+| 2 | List tickets |
+| 3 | View ticket details |
+| 4 | Assign ticket |
+| 5 | Change ticket status |
+| 6 | Show the Open Work Queue |
+| 7 | Show the report |
+| 8 | Add a follow-up note |
+| 9 | View ticket notes |
+| 10 | Search tickets |
+| 11 | Show search results sorted by priority |
+| 12 | Take the understanding check |
+| 13 | Save and exit |
 
 ## Run the tests
 
@@ -41,60 +69,88 @@ From the repository root:
 python3 -m unittest discover -s tests -v
 ```
 
-The tests use Python's built-in `unittest` framework. The integration run on `test/30-integration` records **157 tests passing** at commit `6b6bb8b`; see [`docs/test-output.txt`](docs/test-output.txt). Rerun the command above after any changes.
+The project uses Python's built-in `unittest` framework. See [`docs/test-output.txt`](docs/test-output.txt) for the saved integration run; rerun the command above after changing code.
 
 ## Priority rules
 
-Priority is calculated by `calculate_priority()` in `campusflow/tickets.py`. Rules are evaluated in order; the first matching rule wins.
+Rules are checked in this order:
 
 | Condition | Priority |
 |---|---|
-| Urgency is high **and** at least 10 users are affected | critical |
-| Urgency is high **or** at least 10 users are affected | high |
-| Urgency is medium **or** at least 3 users are affected | medium |
-| None of the above | low |
+| Urgency is `high` and at least 10 users are affected | `critical` |
+| Urgency is `high` or at least 10 users are affected | `high` |
+| Urgency is `medium` or at least 3 users are affected | `medium` |
+| Otherwise | `low` |
 
-A ticket must have a non-blank title, a supported category (`Network`, `Hardware`, `Software`, or `Other`), a supported urgency (`low`, `medium`, or `high`), and a positive whole number of affected users.
+Titles must be non-blank. Category must be `Network`, `Hardware`, `Software`, or `Other`; urgency must be `low`, `medium`, or `high`; affected users must be a positive whole number. Category and urgency input is normalized for case and surrounding whitespace.
 
-## Status workflow
-
-The workflow is enforced by `transition_status()` in `campusflow/workflow.py`.
+## Status and work queue
 
 | Current status | Next status | Rule |
 |---|---|---|
-| `open` | `in_progress` | Allowed only after the ticket has an assignee |
+| `open` | `in_progress` | Allowed only when the ticket is assigned |
 | `in_progress` | `resolved` | Allowed |
-| `resolved` | `open` | Allowed to explicitly reopen the ticket |
-| Any other transition | — | Rejected with `ValueError` |
+| `resolved` | `open` | Explicitly reopens the ticket |
 
-Resolved tickets must be reopened before they can return to work. The Open Work Queue contains only `open` tickets, sorted by priority (critical first) and then by numeric ticket ID ascending. Tickets in `in_progress` are excluded.
+Other transitions are rejected. The Open Work Queue includes only `open` tickets, sorted by priority (`critical`, `high`, `medium`, `low`) and then by numeric ticket ID ascending. `in_progress` and `resolved` tickets are excluded.
 
-## Where ticket data is saved
+## Follow-up notes
 
-The application stores tickets as JSON in `data/tickets.json`, configured by `DEFAULT_PATH` in `campusflow/storage.py`. The `data/tickets.json` file is ignored by Git so local ticket data is not committed.
+Notes can be added to `open` or `in_progress` tickets. A note has a per-ticket ID (`N001`, `N002`, …), a non-blank author, and a message from 5 through 300 characters after trimming whitespace. Notes cannot be added while a ticket is resolved. Reopening the ticket allows new notes; existing notes remain attached. Invalid note requests do not change the ticket or consume a note ID.
 
-Each file contains a JSON list of ticket objects. Current records include `id`, `title`, `category`, `urgency`, `affected_users`, `priority`, `status`, `assigned_to`, and `notes`. `assigned_to` is either a staff name or JSON `null`; `notes` is a list of objects with `note_id`, `author`, and `message`. The loader validates the entire list and rejects invalid records rather than returning a partially loaded collection. Legacy v1 records that omit `notes` are supported and load with `notes: []`; files with the current notes field use the current format.
+## Search
 
-- The data directory is created when saving if it does not exist.
-- On startup, if the file is missing, CampusFlow starts with an empty ticket list.
-- To start fresh, **stop the application first**, then remove the file:
+Search can filter by title text, category, status, and priority. Title search matches a case-insensitive substring. Category, status, and priority filters are exact matches that ignore case and surrounding whitespace. Multiple supplied filters are combined with AND; blank filters are ignored. Search returns a new result list without changing the tickets. The sorted-search menu action orders matches by priority (`critical` first) and then numeric ticket ID.
 
-  ```bash
-  rm -f data/tickets.json
-  ```
+## JSON data and persistence
 
-- If the file contains invalid JSON or the wrong top-level structure, loading raises `StorageError`; the file is not silently replaced with an empty list. Fix or move the damaged file before restarting.
+Ticket data is saved in `data/tickets.json`, relative to the directory from which `main.py` is run. A missing file starts the app with an empty ticket list. The data directory is created on save. The file is ignored by Git.
+
+A current ticket record has this shape:
+
+```json
+[
+  {
+    "id": "T001",
+    "title": "Wi-Fi down",
+    "category": "Network",
+    "urgency": "high",
+    "affected_users": 12,
+    "priority": "critical",
+    "status": "open",
+    "assigned_to": null,
+    "notes": [
+      {
+        "note_id": "N001",
+        "author": "Alex",
+        "message": "Router restarted"
+      }
+    ]
+  }
+]
+```
+
+The top level must be a JSON list. The loader validates the full file, including ticket fields, IDs, priority consistency, and note structure. Invalid JSON or invalid ticket data raises `StorageError`; the file is left unchanged rather than silently reset. Legacy v1 ticket records that omit `notes` load with `notes: []`; other required fields must still be present.
+
+To start fresh, stop the app and remove its data file from the repository root:
+
+```bash
+rm -f data/tickets.json
+```
 
 ## Known limitations
 
-- Tickets are stored locally in one JSON file; there is no database, authentication, or multi-user concurrency control.
-- Running multiple instances at once can cause one instance to overwrite another instance's changes.
+- Data is stored locally in one JSON file; there is no database, authentication, or multi-user write coordination.
+- Running multiple app instances at once can cause one instance to overwrite another's changes.
 - Priority rules are fixed in code and cannot be configured through the CLI.
-- Only the current ticket status is stored; there is no audit trail or status-change history.
-- Keyboard interruption and end-of-file are handled at the menu prompt, but interruption during a feature's prompts is not handled by the same exit path.
-- Storage errors stop startup, but the CLI does not yet provide a dedicated recovery screen; Python may display a traceback.
+- Only the current status is stored; there is no status-change audit history.
+- Storage errors stop normal operation; the CLI has no dedicated recovery screen.
+- Keyboard interruption and end-of-file are handled at the main menu, but not uniformly during every feature prompt.
 
 ## Project documentation
 
 - [Design decisions](docs/design-decisions.md)
+- [Baseline check](docs/baseline-check.md)
+- [Integration checklist](docs/integration-checklist.md)
+- [Demo script](docs/demo-script.md)
 - [AI learning log](docs/ai-learning-log.md)
