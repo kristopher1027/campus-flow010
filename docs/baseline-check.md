@@ -1,19 +1,21 @@
-# CampusFlow Baseline Check
+# CampusFlow Historical Baseline Check
+
+This report preserves observations from an earlier baseline review. The candidate SHA was recorded, but the exact checked-out SHA for every observation was not captured. These findings are historical and do not describe the current feature-complete `main` branch.
 
 ## 1. Audited commit
 
 - Candidate commit: `f96b7d9677613f98f004d3ba3fdb571914b1ae73`
 - Commit message: `Update Engineer B's name in README.md`
 - Commit date: `2026-10-11 20:08:56 +0100`
-- Confirmation that this is the mentor-designated audited commit: **Pending**.
+- Mentor designation: **Not recorded in the materials available for this report.** Do not treat the candidate SHA as mentor-designated unless the mentor confirms it.
 - Branch used for this documentation work: `docs/20-baseline-check`
 
-> The tests below were observed on the currently checked-out code. Confirm that this code is the audited baseline before treating these results as verified results for the audited commit.
+The candidate SHA below was proposed for audit, but the report does not establish that the observed test run and source inspection were performed at that exact SHA. The mentor-designated audited SHA was not recorded.
 
 ## 2. Automated test baseline
 
 - Command: `python3 -m unittest discover -s tests -v`
-- Observed result: **PASS**
+- Observed result during the baseline review: **PASS**
 - Output summary: `Ran 59 tests in 0.017s` and `OK`.
 
 ## 3. Manual tests
@@ -47,8 +49,8 @@
 | Check | Observed behaviour | Assessment |
 |---|---|---|
 | `affected_users` validation | Accepts digit-only strings after trimming whitespace; rejects decimal values and booleans; requires a positive whole number. | Confirm against the exact specification and audited commit. |
-| Work queue statuses | `work_queue` includes tickets with status `open` and `in_progress`. | The claim that the queue only shows `open` was not supported by the inspected current code. |
-| `notes` field | `create_ticket` constructs a ticket without a `notes` field. | Absence observed in the ticket-construction code; confirm the specification requires this field. |
+| Work queue statuses | The source inspected during the baseline review included tickets with status `open` and `in_progress`. | Historical observation; later integration changes set the Open Work Queue to include only `open` tickets. |
+| `notes` field | The `create_ticket` implementation inspected during the baseline review did not construct a `notes` field. | Historical observation; the merged notes feature adds `notes` to new tickets and supports legacy files without the field. |
 | Loader strictness | `load_tickets` rejects malformed JSON and rejects data unless it is a list of dictionaries. | These checks are present; full ticket-field validation has not been established by this inspection alone. |
 
 ## 5. Audit feedback and reproduction status
@@ -61,9 +63,8 @@ No original audit feedback was provided for this baseline check. Therefore, ther
 
 Do not classify a peer-reported issue as confirmed without reproducing it.
 
-## 6. Outstanding items
+## 6. Scope and limits
 
-- [ ] Confirm the mentor-designated audited commit SHA.
-- [ ] Verify the manual and automated results against that exact commit.\n- [x] Rerun the automated test suite on the current branch: 59 tests passed (`OK`).
-- [ ] Copy the original audit feedback into this report and classify each claim using observed evidence.
-- [ ] Obtain the other engineer's contribution and review before merging through a pull request.
+- The mentor-designated baseline SHA was not included in the materials available when this report was written. The candidate SHA above is retained for traceability, not represented as confirmed.
+- The 59-test result and manual observations are historical and must not be used as evidence for the later merged feature set. The current integration run is recorded in [`integration-checklist.md`](integration-checklist.md) and [`test-output.txt`](test-output.txt).
+- No original audit feedback was supplied with this report, so it contains no claim-by-claim reproduction assessment.

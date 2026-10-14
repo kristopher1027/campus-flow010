@@ -157,6 +157,6 @@ test_unassigned_cannot_start_progress (test_workflow.TestTransitionStatus.test_u
 test_unknown_ticket_raises (test_workflow.TestTransitionStatus.test_unknown_ticket_raises) ... ok
 
 ----------------------------------------------------------------------
-Ran 157 tests in 0.106s
+Ran 157 tests in 0.064s
 
 OK
