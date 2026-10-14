@@ -37,7 +37,9 @@ All JSON file access belongs to `campusflow/storage.py`; other modules call `loa
 
 - `DEFAULT_PATH` is `data/tickets.json`.
 - If the file is missing, `load_tickets` returns an empty list to support a fresh start.
-- Invalid JSON or a top-level value that is not a list of dictionaries raises `StorageError`; the failed load does not overwrite the source file.
+- Current JSON files contain a list of ticket objects with `id`, `title`, `category`, `urgency`, `affected_users`, `priority`, `status`, `assigned_to`, and `notes`. Notes are objects with exactly `note_id`, `author`, and `message`; `assigned_to` may be JSON `null`.
+- Legacy v1 tickets without a `notes` field remain supported and load with `notes: []`. Other missing required fields are invalid.
+- Loading validates the whole collection before returning it. Invalid JSON or invalid ticket data raises `StorageError`; the failed load does not overwrite the source file or replace the caller's existing in-memory collection.
 - Saving creates the parent directory if needed, writes pretty-printed JSON to a temporary `.tmp` file, and uses `os.replace` to replace the target after the write.
 - The real data file is ignored by Git. Tests use temporary directories/files so they do not alter a developer's real ticket data.
 
