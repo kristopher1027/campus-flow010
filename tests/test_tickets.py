@@ -1,7 +1,6 @@
 import unittest
 
 from campusflow.tickets import (
-    
     calculate_priority,
     create_ticket,
     find_ticket,
@@ -48,10 +47,15 @@ class TestCreateTicket(unittest.TestCase):
                 ticket = create_ticket([], "x", "Network", raw, 1)
                 self.assertEqual(ticket["urgency"], "high")
 
-   
     def test_numeric_string_affected_users_rejected(self):
         with self.assertRaises(ValueError):
             create_ticket([], "x", "Network", "low", "15")
+
+    def test_unicode_whitespace_around_title_is_stripped(self):
+        ticket = create_ticket(
+            [], "\u00a0Network issue\u00a0", "Network", "low", 1
+        )
+        self.assertEqual(ticket["title"], "Network issue")
 
 class TestInvalidInput(unittest.TestCase):
 
@@ -73,7 +77,6 @@ class TestInvalidInput(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     create_ticket([], "x", "Network", bad, 5)
 
-    
     def test_bad_affected_users_rejected(self):
         for bad in (0, -3, 2.5, "5", "abc", "", "2.5", "-3", True, False, None):
             with self.subTest(bad=bad):

@@ -31,7 +31,7 @@ python3 --version
 python3 main.py
 ```
 
-The menu lets you create, list, and view tickets; assign a ticket; change its status; display the work queue; view a report; or exit. Enter the number for the action you want and follow the prompts.
+The menu lets you create, list, and view tickets; assign a ticket; change its status; display the open work queue; view a report; add or view follow-up notes; search tickets; view search results sorted by priority; or take the understanding check. Enter the number for the action you want and follow the prompts.
 
 ## Run the tests
 
@@ -67,7 +67,7 @@ The workflow is enforced by `transition_status()` in `campusflow/workflow.py`.
 | `resolved` | `open` | Allowed to explicitly reopen the ticket |
 | Any other transition | — | Rejected with `ValueError` |
 
-Resolved tickets must be reopened before they can return to work. The work queue contains only `open` and `in_progress` tickets, sorted by priority (critical first) and then by numeric ticket ID ascending.
+Resolved tickets must be reopened before they can return to work. The Open Work Queue contains only `open` tickets, sorted by priority (critical first) and then by numeric ticket ID ascending. Tickets in `in_progress` are excluded.
 
 ## Where ticket data is saved
 

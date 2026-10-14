@@ -4,7 +4,7 @@ This document records the data and workflow choices reflected in the current imp
 
 ## 1. Data structure
 
-The application keeps tickets in a single in-memory `list[dict]` named `tickets`. Each ticket has these eight fields:
+The application keeps tickets in a single in-memory `list[dict]` named `tickets`. Each ticket has these nine fields:
 
 | Field | Type | Purpose |
 |---|---|---|
@@ -16,6 +16,7 @@ The application keeps tickets in a single in-memory `list[dict]` named `tickets`
 | `priority` | `str` | Computed from urgency and affected users |
 | `status` | `str` | `open`, `in_progress`, or `resolved` |
 | `assigned_to` | `str` or `None` | Assigned staff member, or unassigned |
+| `notes` | `list[dict]` | Per-ticket follow-up notes with an ID, author, and message |
 
 This structure is simple for a small, single-process CLI and maps directly to JSON. It does not provide database constraints or concurrent-write protection.
 
@@ -69,7 +70,7 @@ The explicit reopen step prevents a resolved ticket from skipping the defined wo
 
 ## 6. Work queue decision
 
-`work_queue(tickets)` includes tickets whose status is `open` or `in_progress`; resolved tickets are excluded because they no longer need active work. The queue sorts by priority (`critical`, `high`, `medium`, `low`) and then by numeric ticket ID ascending so older/lower-numbered tickets appear first within the same priority.
+`work_queue(tickets)` includes only tickets whose status is `open`; `in_progress` and `resolved` tickets are excluded. The queue sorts by priority (`critical`, `high`, `medium`, `low`) and then by numeric ticket ID ascending so older/lower-numbered tickets appear first within the same priority.
 
 The function returns a sorted list without sorting the original ticket collection in place.
 
@@ -102,6 +103,17 @@ The function returns a sorted list without sorting the original ticket collectio
 | Ticket creation, validation, priority engine, ID generation | Engineer A |
 | Assignment, workflow, queue, reports | Engineer B |
 | Storage integration and CLI entry point | Shared integration work |
+
+## Cross-engineer edge-case check
+
+- **Initial state:** An empty ticket list; no ticket has been created yet.
+- **Input:** Create a ticket with U+00A0 non-breaking spaces around `Network issue`, category `Network`, urgency `low`, and one affected user.
+- **Expected result:** Leading and trailing Unicode whitespace is stripped, leaving the stored title `Network issue`.
+- **Actual result:** `create_ticket` returned a ticket with title `Network issue`.
+- **Test name:** `test_unicode_whitespace_around_title_is_stripped` in `tests/test_tickets.py`.
+- **Code change:** No production code change was needed; the new regression test makes Unicode whitespace normalization explicit.
+
+This edge case supplements the standard title checks by testing non-breaking spaces rather than ordinary spaces. Share this result with Engineer A as a focused review note.
 
 Relevant implementation history: [PR #13 — ticket creation](https://github.com/kristopher1027/campus-flow/pull/13), [PR #12 — assignment/workflow/queue/reports](https://github.com/kristopher1027/campus-flow/pull/12), [PR #18 — JSON storage](https://github.com/kristopher1027/campus-flow/pull/18), and [PR #19 — CLI menu](https://github.com/kristopher1027/campus-flow/pull/19).
 

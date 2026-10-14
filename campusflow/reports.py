@@ -1,12 +1,17 @@
+
 """Ticket lookup, work queues, and reporting for CampusFlow."""
+
+from campusflow.tickets import ALLOWED_CATEGORIES
 
 PRIORITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 STATUS_ORDER = ("open", "in_progress", "resolved")
 REPORT_PRIORITY_ORDER = ("critical", "high", "medium", "low")
+REPORT_CATEGORY_ORDER = ALLOWED_CATEGORIES
+UNRESOLVED_STATUSES = ("open", "in_progress")
 
 
 def get_ticket(tickets, ticket_id):
-    """Return the ticket with the given ID, or raise ValueError."""
+    """Return a ticket by ID, or raise ValueError."""
     for ticket in tickets:
         if ticket["id"] == ticket_id:
             return ticket
@@ -19,11 +24,10 @@ def list_tickets(tickets):
 
 
 def work_queue(tickets):
-    """Return open and in-progress tickets sorted by priority, then numeric ID."""
+    """Return open tickets sorted by priority and numeric ID."""
     queue = [
-        ticket
-        for ticket in tickets
-        if ticket["status"] in ("open", "in_progress")
+        ticket for ticket in tickets
+        if ticket["status"] == "open"
     ]
 
     def sort_key(ticket):
@@ -38,33 +42,49 @@ def work_queue(tickets):
 
 
 def generate_report(tickets):
-    """Return total ticket counts grouped by status and priority."""
+    """Return counts and resolution insights using current ticket status."""
     by_status = {status: 0 for status in STATUS_ORDER}
     by_priority = {priority: 0 for priority in REPORT_PRIORITY_ORDER}
+    by_category = {category: 0 for category in REPORT_CATEGORY_ORDER}
 
     for ticket in tickets:
         status = ticket["status"]
         priority = ticket["priority"]
+        category = ticket["category"]
 
         if status in by_status:
             by_status[status] += 1
+
         if priority in by_priority:
             by_priority[priority] += 1
 
+        if category in by_category:
+            by_category[category] += 1
+
+    total = len(tickets)
+    unresolved = sum(by_status[s] for s in UNRESOLVED_STATUSES)
+    resolved = by_status["resolved"]
+
+    resolution_percentage = resolved / total * 100 if total else 0.0
+
     return {
-        "total": len(tickets),
+        "total": total,
         "by_status": by_status,
         "by_priority": by_priority,
+        "by_category": by_category,
+        "unresolved": unresolved,
+        "resolved": resolved,
+        "resolution_percentage": resolution_percentage,
     }
 
 
 def report_summary(tickets):
-    """Backward-compatible alias for generate_report."""
+    """Keep compatibility with existing callers."""
     return generate_report(tickets)
 
 
 def format_report(report):
-    """Format a report dictionary as readable, consistently ordered text."""
+    """Return a readable report string without printing."""
     lines = [
         "CampusFlow Ticket Report",
         f"Total tickets: {report['total']}",
@@ -75,10 +95,21 @@ def format_report(report):
     for status in STATUS_ORDER:
         lines.append(f"  {status}: {report['by_status'][status]}")
 
-    lines.append("")
-    lines.append("By priority:")
+    lines.extend(["", "By priority:"])
 
     for priority in REPORT_PRIORITY_ORDER:
         lines.append(f"  {priority}: {report['by_priority'][priority]}")
+
+    lines.extend(["", "By category:"])
+
+    for category in REPORT_CATEGORY_ORDER:
+        lines.append(f"  {category}: {report['by_category'][category]}")
+
+    lines.extend([
+        "",
+        f"Unresolved (open + in_progress): {report['unresolved']}",
+        f"Resolved: {report['resolved']}",
+        f"Resolution rate: {report['resolution_percentage']:.1f}%",
+    ])
 
     return "\n".join(lines)
