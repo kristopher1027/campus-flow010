@@ -53,4 +53,17 @@ def load_tickets(path=DEFAULT_PATH):
         raise StorageError(
             f"'{path}' must contain a list of tickets. The file has not been changed."
         )
+
+    seen_ids = []
+    for ticket in data:
+        ticket_id = ticket.get("id")
+        if ticket_id is None:
+            continue
+        if ticket_id in seen_ids:
+            raise StorageError(
+                f"'{path}' contains duplicate ticket ID {ticket_id!r}. "
+                "The file has not been changed."
+            )
+        seen_ids.append(ticket_id)
+
     return data

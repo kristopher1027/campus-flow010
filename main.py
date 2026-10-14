@@ -12,6 +12,7 @@ from campusflow.storage import load_tickets, save_tickets, DEFAULT_PATH
 from campusflow.search import search_tickets, sort_by_priority, format_search_results
 from campusflow.notes import add_note, get_notes
 from campusflow.note_storage import load_notes, save_notes, NOTES_PATH
+from campusflow.understanding_check import QUESTIONS, run_check
 
 
 
@@ -175,6 +176,10 @@ def handle_sorted_search(tickets):
     print(format_search_results(sorted_results))
 
 
+def handle_understanding_check():
+    run_check(QUESTIONS, input, print)
+
+
 
 # ============================================================
 # Menu and main loop
@@ -193,7 +198,8 @@ def show_menu():
     print("9. View Ticket Notes")
     print("10. Search Tickets")
     print("11. Sorted Search Results")
-    print("12. Exit")
+    print("12. Understanding Check")
+    print("13. Exit")
 
 
 
@@ -236,11 +242,13 @@ def main():
         elif choice == "11":
             handle_sorted_search(tickets)
         elif choice == "12":
+            handle_understanding_check()
+        elif choice == "13":
             save_tickets(tickets, DEFAULT_PATH)
             print("Goodbye.")
             break
         else:
-            print("Invalid choice. Enter a number from 1-12.")
+            print("Invalid choice. Enter a number from 1-13.")
 
 
 

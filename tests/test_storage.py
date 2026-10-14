@@ -57,6 +57,20 @@ class TestStorage(unittest.TestCase):
                 with self.assertRaises(StorageError):
                     load_tickets(self.path)
 
+    def test_duplicate_ticket_ids_are_rejected(self):
+        duplicate_tickets = [
+            {"id": "T001", "title": "First"},
+            {"id": "T001", "title": "Second"},
+        ]
+        save_tickets(duplicate_tickets, self.path)
+
+        current_memory = [{"id": "T999", "title": "Existing memory"}]
+        with self.assertRaisesRegex(StorageError, "duplicate ticket ID"):
+            loaded = load_tickets(self.path)
+            current_memory[:] = loaded
+
+        self.assertEqual(current_memory, [{"id": "T999", "title": "Existing memory"}])
+
     def test_save_creates_missing_folder(self):
         nested = os.path.join(self.temp_dir.name, "data", "sub", "tickets.json")
         save_tickets([], nested)

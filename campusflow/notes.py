@@ -8,6 +8,9 @@ def add_note(notes, tickets, ticket_id, text):
     """Add a note to an existing ticket."""
     ticket = find_ticket(tickets, ticket_id)
 
+    if ticket["status"] == "resolved":
+        raise ValueError("Cannot add a note to a resolved ticket. Reopen it first.")
+
     if not isinstance(text, str) or not text.strip():
         raise ValueError("Note cannot be empty.")
 

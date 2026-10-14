@@ -19,7 +19,7 @@ class TestCliHandlers(unittest.TestCase):
         with patch.object(main, "load_tickets", return_value=self.tickets), \
              patch.object(main, "load_notes", return_value=self.notes), \
              patch.object(main, "save_tickets") as save_tickets, \
-             patch("builtins.input", side_effect=["99", "12"]), \
+             patch("builtins.input", side_effect=["99", "13"]), \
              patch("builtins.print") as print_output:
             main.main()
 
