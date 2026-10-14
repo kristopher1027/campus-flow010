@@ -21,7 +21,7 @@ class TestCreateTicket(unittest.TestCase):
         ticket = create_ticket(tickets, "Wi-Fi down", "Network", "high", 15)
         expected_keys = {
             "id", "title", "category", "urgency",
-            "affected_users", "priority", "status", "assigned_to",
+            "affected_users", "priority", "status", "assigned_to", "notes",
         }
         self.assertEqual(set(ticket.keys()), expected_keys)
         self.assertEqual(len(tickets), 1)
@@ -30,6 +30,7 @@ class TestCreateTicket(unittest.TestCase):
         ticket = create_ticket([], "Wi-Fi down", "Network", "high", 15)
         self.assertEqual(ticket["status"], "open")
         self.assertIsNone(ticket["assigned_to"])
+        self.assertEqual(ticket["notes"], [])
 
     def test_title_is_stripped(self):
         ticket = create_ticket([], "  Wi-Fi down  ", "Network", "high", 15)

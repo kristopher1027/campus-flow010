@@ -181,6 +181,7 @@ def create_ticket(tickets, title, category, urgency, affected_users):
         "priority": priority,
         "status": "open",
         "assigned_to": None,
+        "notes": [],
     }
 
     tickets.append(ticket)   # the very last step that touches the list
@@ -230,3 +231,78 @@ def format_ticket_list(tickets):
     if not tickets:
         return "No tickets yet."
     return "\n".join(format_ticket_summary(t) for t in tickets)
+
+
+def next_note_id(ticket):
+    """Return the next per-ticket note ID, such as N001 or N002."""
+    notes = ticket.get("notes", [])
+
+    if not isinstance(notes, list):
+        raise ValueError("Ticket notes must be a list.")
+
+    highest = 0
+    seen_ids = set()
+
+    for note in notes:
+        if not isinstance(note, dict):
+            raise ValueError("Every note must be a dictionary.")
+
+        note_id = note.get("note_id")
+
+        if (
+            not isinstance(note_id, str)
+            or len(note_id) < 2
+            or not note_id.startswith("N")
+            or not note_id[1:].isascii()
+            or not note_id[1:].isdigit()
+            or int(note_id[1:]) <= 0
+        ):
+            raise ValueError("Note ID must use the format N001.")
+
+        if note_id in seen_ids:
+            raise ValueError(f"Duplicate note ID '{note_id}'.")
+
+        seen_ids.add(note_id)
+        highest = max(highest, int(note_id[1:]))
+
+    return f"N{highest + 1:03d}"
+
+
+def add_note(tickets, ticket_id, author, message):
+    """Add a validated note to an open or in-progress ticket.
+
+    Return the new note. Raise ValueError for invalid input or ticket state.
+    Rejected notes do not mutate the ticket or consume a note ID.
+    """
+    ticket = find_ticket(tickets, ticket_id)
+
+    if ticket.get("status") not in ("open", "in_progress"):
+        raise ValueError("Cannot add a note to a resolved ticket.")
+
+    if not isinstance(author, str):
+        raise ValueError("Note author must be non-blank text.")
+
+    author = author.strip()
+    if not author:
+        raise ValueError("Note author must be non-blank text.")
+
+    if not isinstance(message, str):
+        raise ValueError("Note message must contain 5–300 characters.")
+
+    message = message.strip()
+    if not 5 <= len(message) <= 300:
+        raise ValueError("Note message must contain 5–300 characters.")
+
+    notes = ticket.get("notes")
+    if not isinstance(notes, list):
+        raise ValueError("Ticket notes must be a list.")
+
+    note_id = next_note_id(ticket)
+    note = {
+        "note_id": note_id,
+        "author": author,
+        "message": message,
+    }
+
+    notes.append(note)
+    return note

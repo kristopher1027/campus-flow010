@@ -93,3 +93,40 @@ The function returns a sorted list without sorting the original ticket collectio
 | Storage integration and CLI entry point | Shared integration work |
 
 Relevant implementation history: [PR #13 — ticket creation](https://github.com/kristopher1027/campus-flow/pull/13), [PR #12 — assignment/workflow/queue/reports](https://github.com/kristopher1027/campus-flow/pull/12), [PR #18 — JSON storage](https://github.com/kristopher1027/campus-flow/pull/18), and [PR #19 — CLI menu](https://github.com/kristopher1027/campus-flow/pull/19).
+
+
+## Ticket Notes (Issue #21)
+
+### `next_note_id(ticket)`
+
+Returns the next sequential note ID for a ticket, using the format `N001`, `N002`, and so on. IDs are generated independently for each ticket and continue from the highest existing note ID.
+
+Raises `ValueError` if the ticket's notes collection or existing note IDs are invalid.
+
+### `add_note(tickets, ticket_id, author, message)`
+
+Adds a note to an existing ticket and returns the new note dictionary:
+
+- `note_id`: sequential per-ticket ID, such as `N001`.
+- `author`: author name, trimmed of surrounding whitespace.
+- `message`: note content, trimmed of surrounding whitespace.
+
+**Validation rules**
+
+- The ticket must exist.
+- The ticket status must be `open` or `in_progress`.
+- The author must be a non-blank string.
+- The trimmed message must contain between 5 and 300 characters, inclusive.
+- The ticket's notes collection must be a list.
+
+**Errors and mutation behavior**
+
+Raises `ValueError` when the ticket cannot be found, the ticket status does not allow notes, or the input or existing notes data is invalid.
+
+Validation occurs before appending a note. Rejected notes do not change the ticket's notes collection or consume a note ID.
+
+Notes remain attached to their ticket when its status changes, including when the ticket is resolved and later reopened. A resolved ticket must be reopened before additional notes can be added.
+
+### CLI integration contract
+
+The CLI can call `add_note(tickets, ticket_id, author, message)`. On success, it receives the created note dictionary. It should catch `ValueError` and display a clear error message to the user.
