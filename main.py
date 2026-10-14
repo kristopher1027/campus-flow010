@@ -9,6 +9,10 @@ from campusflow.tickets import (
 from campusflow.reports import work_queue, report_summary, format_report
 from campusflow.workflow import assign_ticket, transition_status
 from campusflow.storage import load_tickets, save_tickets, DEFAULT_PATH
+from campusflow.search import search_tickets, sort_by_priority, format_search_results
+from campusflow.notes import add_note, get_notes
+from campusflow.note_storage import load_notes, save_notes, NOTES_PATH
+
 
 
 # ============================================================
@@ -83,6 +87,95 @@ def handle_report(tickets):
     print(format_report(report_summary(tickets)))
 
 
+
+def handle_add_note(tickets, notes):
+    try:
+        ticket_id = input("Ticket ID: ").strip()
+        note_text = input("Follow-up note: ").strip()
+
+        note = add_note(notes, tickets, ticket_id, note_text)
+        save_notes(notes, NOTES_PATH)
+
+        print(
+            f"Note {note['id']} added to ticket "
+            f"{note['ticket_id']} successfully."
+        )
+
+    except ValueError as error:
+        print(f"Error: {error}")
+
+
+def handle_view_notes(tickets, notes):
+    try:
+        ticket_id = input("Ticket ID: ").strip()
+        ticket_notes = get_notes(notes, tickets, ticket_id)
+
+        if not ticket_notes:
+            print(f"No notes found for ticket {ticket_id}.")
+            return
+
+        print(f"\nNotes for ticket {ticket_id}:")
+        for note in ticket_notes:
+            print(f"Note {note['id']}: {note['text']}")
+
+    except ValueError as error:
+        print(f"Error: {error}")
+
+
+
+def prompt_filter(label, allowed_choices):
+    """Ask for an optional filter and re-prompt until it is valid."""
+    while True:
+        value = input(
+            f"{label} ({'/'.join(allowed_choices)}, or Enter to skip): "
+        ).strip()
+
+        if not value:
+            return None
+
+        for choice in allowed_choices:
+            if value.casefold() == choice.casefold():
+                return choice
+
+        print(f"Invalid {label.lower()}. Choose one of: "
+              f"{', '.join(allowed_choices)}.")
+
+
+def get_search_results(tickets):
+    """Collect search criteria and return matching tickets."""
+    text = input("Search title (or press Enter to skip): ").strip()
+
+    category = prompt_filter(
+        "Category", ["Network", "Hardware", "Software", "Other"]
+    )
+    status = prompt_filter(
+        "Status", ["open", "in_progress", "resolved"]
+    )
+    priority = prompt_filter(
+        "Priority", ["critical", "high", "medium", "low"]
+    )
+
+    return search_tickets(
+        tickets,
+        text=text or None,
+        category=category,
+        status=status,
+        priority=priority,
+    )
+
+
+def handle_search(tickets):
+    results = get_search_results(tickets)
+    print(format_search_results(results))
+
+
+def handle_sorted_search(tickets):
+    results = get_search_results(tickets)
+    sorted_results = sort_by_priority(results)
+    print(format_search_results(sorted_results))
+
+
+
 # ============================================================
 # Menu and main loop
 # ============================================================
@@ -96,11 +189,17 @@ def show_menu():
     print("5. Change status")
     print("6. Work queue")
     print("7. Report")
-    print("8. Exit")
+    print("8. Add Follow-up Note")
+    print("9. View Ticket Notes")
+    print("10. Search Tickets")
+    print("11. Sorted Search Results")
+    print("12. Exit")
+
 
 
 def main():
     tickets = load_tickets(DEFAULT_PATH)
+    notes = load_notes(NOTES_PATH)
 
     while True:
         show_menu()
@@ -123,14 +222,26 @@ def main():
             handle_status(tickets)
         elif choice == "6":
             handle_queue(tickets)
+        
         elif choice == "7":
             handle_report(tickets)
+        
         elif choice == "8":
+            handle_add_note(tickets, notes)
+        elif choice == "9":
+            handle_view_notes(tickets, notes)
+
+        elif choice == "10":
+            handle_search(tickets)
+        elif choice == "11":
+            handle_sorted_search(tickets)
+        elif choice == "12":
             save_tickets(tickets, DEFAULT_PATH)
             print("Goodbye.")
             break
         else:
-            print("Invalid choice. Enter 1-8.")
+            print("Invalid choice. Enter a number from 1-12.")
+
 
 
 if __name__ == "__main__":
